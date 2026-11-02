@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autofill ASCII Fallback & ARIA Validation Test</title>
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-color: #202124;
+      --text-secondary: #5f6368;
+      --border-color: #dadce0;
+      --primary-color: #1a73e8;
+      --primary-hover: #1557b0;
+      --error-color: #d93025;
+      --error-bg: #fce8e6;
+      --success-color: #188038;
+      --success-bg: #e6f4ea;
+      --warning-bg: #fef7e0;
+      --warning-color: #b06000;
+      --code-bg: #2d3748;
+      --code-text: #e2e8f0;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 8px;
+      color: #1a73e8;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .instructions-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .instructions-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .instructions-card ol {
+      margin-left: 20px;
+      margin-bottom: 12px;
+      color: var(--text-color);
+      font-size: 0.9rem;
+    }
+
+    .instructions-card code {
+      background: #e8eaed;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85rem;
+    }
+
+    .instructions-card pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 10px 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-desc {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .badge-dynamic {
+      background: #e8f0fe;
+      color: #1a73e8;
+    }
+
+    .badge-pattern {
+      background: #feefe3;
+      color: #d93025;
+    }
+
+    .badge-preset {
+      background: #fef7e0;
+      color: #b06000;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-color);
+    }
+
+    input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+    }
+
+    /* Invalid state styled based on aria-invalid */
+    input[aria-invalid="true"] {
+      border-color: var(--error-color) !important;
+      background-color: var(--error-bg);
+    }
+
+    input[aria-invalid="false"].validated {
+      border-color: var(--success-color);
+      background-color: var(--success-bg);
+    }
+
+    .error-msg {
+      display: none;
+      color: var(--error-color);
+      font-size: 0.8rem;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    .aria-status-badge {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-family: monospace;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    button, input[type="submit"], input[type="reset"] {
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+
+    .btn-primary, input[type="submit"] {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover, input[type="submit"]:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary, input[type="reset"] {
+      background: white;
+      color: var(--text-color);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover, input[type="reset"]:hover {
+      background: #f1f3f4;
+    }
+
+    .btn-simulate {
+      background: #e8f0fe;
+      color: #1a73e8;
+      border-color: #d2e3fc;
+    }
+
+    .btn-simulate:hover {
+      background: #d2e3fc;
+    }
+
+    /* Event log panel */
+    .log-container {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.825rem;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #333;
+      word-break: break-word;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      color: #888;
+      margin-right: 8px;
+    }
+
+    .log-target {
+      color: #4fc1ff;
+      font-weight: bold;
+    }
+
+    .log-event {
+      color: #dcdcaa;
+    }
+
+    .log-val-fail {
+      color: #f48771;
+    }
+
+    .log-val-pass {
+      color: #89d185;
+    }
+
+    .log-highlight {
+      background: rgba(255, 235, 59, 0.15);
+      border-left: 3px solid #fbc02d;
+      padding-left: 6px;
+    }
+
+    .log-refill-success {
+      background: rgba(46, 125, 50, 0.2);
+      border-left: 3px solid #4caf50;
+      padding-left: 6px;
+      color: #81c784;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Autofill Diacritic Fallback & ARIA Validation Test</h1>
+      <p class="subtitle">Manual verification testbench for CL prototype (Idea 7: Refill diacritic-free ASCII on validation failure)</p>
+    </header>
+
+    <!-- Instructions banner -->
+    <div class="instructions-card">
+      <h2>How to manually test with Chrome Autofill:</h2>
+      <ol>
+        <li>Make sure Chrome is running with <code>--enable-features=AutofillRefillAsciiOnValidationError</code> (enabled by default in test build).</li>
+        <li>Ensure you have a saved Chrome Autofill address profile containing diacritic characters:
+          <br>&bull; Name: <code>Przemysław Perkowski</code> or <code>Jérôme Dupont</code>
+          <br>&bull; City: <code>München</code> or <code>Kraków</code>
+          <br>&bull; Street: <code>Świętokrzyska 10</code>
+        </li>
+        <li>Click into any field below and choose your profile from the Autofill popup menu.</li>
+        <li><strong>Expected Behavior:</strong>
+          <br>&bull; <em>Preview:</em> The preview shows the diacritic-free ASCII fallback (e.g. <code>Przemyslaw</code> or <code>Munchen</code>) if the original violates validation constraints.
+          <br>&bull; <em>Fill:</em> When filled, if verification fails and marks the field with an error / <code>aria-invalid="true"</code>, Autofill automatically and synchronously refills the ASCII fallback.
+        </li>
+      </ol>
+      <details>
+        <summary style="cursor:pointer; font-weight:500; font-size:0.875rem; color:#1a73e8;">Run Chrome with custom profile command</summary>
+        <pre>/usr/local/google/home/perkowski/chromium2/src/out/Default/chrome \
+  --enable-features=AutofillRefillAsciiOnValidationError \
+  --user-data-dir=/tmp/autofill_test_profile \
+  "http://localhost:8000/aria_validation_test.html"</pre>
+      </details>
+    </div>
+
+    <!-- Form 1: Dynamic JS Validation with ARIA Label & aria-invalid -->
+    <div class="card">
+      <h2>
+        Form 1: Dynamic Verification Failure (Updates ARIA Label & aria-invalid)
+        <span class="badge badge-dynamic">Dynamic JS Validation</span>
+      </h2>
+      <p class="card-desc">
+        A JavaScript listener on <code>input</code> and <code>change</code> validates the content. If non-ASCII diacritics are detected, verification fails:
+        it sets <code>aria-invalid="true"</code> and updates <code>aria-label</code> to indicate the error to assistive technologies.
+      </p>
+
+      <form id="form-dynamic" autocomplete="on" action="https://dump-truck.appspot.com/post.html" method="POST">
+        <div class="form-grid">
+          
+          <!-- First Name -->
+          <div class="form-group">
+            <label for="fname-dyn">First Name</label>
+            <input 
+              type="text" 
+              id="fname-dyn" 
+              name="fname" 
+              autocomplete="given-name" 
+              placeholder="e.g. Przemysław" 
+              aria-label="First Name" 
+              data-base-label="First Name"
+              data-error-target="fname-dyn-error">
+            <div id="fname-dyn-error" class="error-msg" role="alert" aria-label="First Name error message"></div>
+            <div class="aria-status-badge" id="fname-dyn-status">aria-label="First Name"</div>
+          </div>
+
+          <!-- Last Name -->
+          <div class="form-group">
+            <label for="lname-dyn">Last Name</label>
+            <input 
+              type="text" 
+              id="lname-dyn" 
+              name="lname" 
+              autocomplete="family-name" 
+              placeholder="e.g. Müller" 
+              aria-label="Last Name" 
+              data-base-label="Last Name"
+              data-error-target="lname-dyn-error">
+            <div id="lname-dyn-error" class="error-msg" role="alert" aria-label="Last Name error message"></div>
+            <div class="aria-status-badge" id="lname-dyn-status">aria-label="Last Name"</div>
+          </div>
+
+          <!-- Street Address -->
+          <div class="form-group">
+            <label for="street-dyn">Street Address</label>
+            <input 
+              type="text" 
+              id="street-dyn" 
+              name="street-address" 
+              autocomplete="address-line1" 
+              placeholder="e.g. Świętokrzyska 10" 
+              aria-label="Street Address" 
+              data-base-label="Street Address"
+              data-error-target="street-dyn-error">
+            <div id="street-dyn-error" class="error-msg" role="alert" aria-label="Street Address error message"></div>
+            <div class="aria-status-badge" id="street-dyn-status">aria-label="Street Address"</div>
+          </div>
+
+          <!-- City -->
+          <div class="form-group">
+            <label for="city-dyn">City</label>
+            <input 
+              type="text" 
+              id="city-dyn" 
+              name="city" 
+              autocomplete="address-level2" 
+              placeholder="e.g. München or Kraków" 
+              aria-label="City" 
+              data-base-label="City"
+              data-error-target="city-dyn-error">
+            <div id="city-dyn-error" class="error-msg" role="alert" aria-label="City error message"></div>
+            <div class="aria-status-badge" id="city-dyn-status">aria-label="City"</div>
+          </div>
+
+          <!-- Postal Code -->
+          <div class="form-group">
+            <label for="zip-dyn">ZIP / Postal Code</label>
+            <input 
+              type="text" 
+              id="zip-dyn" 
+              name="postal-code" 
+              autocomplete="postal-code" 
+              placeholder="00-001" 
+              aria-label="Postal Code" 
+              data-base-label="Postal Code"
+              data-error-target="zip-dyn-error">
+            <div id="zip-dyn-error" class="error-msg" role="alert" aria-label="Postal Code error message"></div>
+            <div class="aria-status-badge" id="zip-dyn-status">aria-label="Postal Code"</div>
+          </div>
+
+          <!-- Country -->
+          <div class="form-group">
+            <label for="country-dyn">Country</label>
+            <input 
+              type="text" 
+              id="country-dyn" 
+              name="country" 
+              autocomplete="country" 
+              placeholder="PL or DE" 
+              aria-label="Country" 
+              data-base-label="Country"
+              data-error-target="country-dyn-error">
+            <div id="country-dyn-error" class="error-msg" role="alert" aria-label="Country error message"></div>
+            <div class="aria-status-badge" id="country-dyn-status">aria-label="Country"</div>
+          </div>
+
+        </div>
+
+        <div class="button-group">
+          <input type="submit" value="Submit Form">
+          <input type="reset" value="Reset Fields">
+          <button type="button" class="btn-simulate" onclick="simulateAutofill('form-dynamic', 'Przemysław', 'Perkowski', 'Świętokrzyska 10', 'Warszawa')">
+            Test Simulation: "Przemysław"
+          </button>
+          <button type="button" class="btn-simulate" onclick="simulateAutofill('form-dynamic', 'Jérôme', 'Dupont', 'Rue d\'Alésia 5', 'München')">
+            Test Simulation: "Jérôme / München"
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Form 2: HTML5 Pattern Constraint with ARIA Validation Feedback -->
+    <div class="card">
+      <h2>
+        Form 2: HTML5 Pattern Constraint + ARIA Label Feedback
+        <span class="badge badge-pattern">HTML5 Pattern Constraint</span>
+      </h2>
+      <p class="card-desc">
+        Fields enforce strict ASCII pattern constraints: <code>pattern="^[A-Za-z0-9\s,.-]+$"</code>.
+        Chrome evaluates <code>WebInputElement::IsValidValue()</code> directly in preview and fill. When invalid, the form also sets <code>aria-label</code> and <code>aria-invalid</code>.
+      </p>
+
+      <form id="form-pattern" autocomplete="on" action="https://dump-truck.appspot.com/post.html" method="POST">
+        <div class="form-grid">
+          
+          <div class="form-group">
+            <label for="fname-pat">First Name (ASCII letters only)</label>
+            <input 
+              type="text" 
+              id="fname-pat" 
+              name="fname" 
+              autocomplete="given-name" 
+              pattern="^[A-Za-z\s]+$"
+              title="Only ASCII letters allowed"
+              placeholder="Letters only (no diacritics)" 
+              aria-label="First Name (ASCII only)" 
+              data-base-label="First Name (ASCII only)"
+              data-error-target="fname-pat-error">
+            <div id="fname-pat-error" class="error-msg" role="alert" aria-label="First Name constraint violation"></div>
+            <div class="aria-status-badge" id="fname-pat-status">pattern="^[A-Za-z\s]+$"</div>
+          </div>
+
+          <div class="form-group">
+            <label for="lname-pat">Last Name (ASCII letters only)</label>
+            <input 
+              type="text" 
+              id="lname-pat" 
+              name="lname" 
+              autocomplete="family-name" 
+              pattern="^[A-Za-z\s]+$"
+              title="Only ASCII letters allowed"
+              placeholder="Letters only" 
+              aria-label="Last Name (ASCII only)" 
+              data-base-label="Last Name (ASCII only)"
+              data-error-target="lname-pat-error">
+            <div id="lname-pat-error" class="error-msg" role="alert" aria-label="Last Name constraint violation"></div>
+            <div class="aria-status-badge" id="lname-pat-status">pattern="^[A-Za-z\s]+$"</div>
+          </div>
+
+          <div class="form-group">
+            <label for="city-pat">City (ASCII alphanumeric)</label>
+            <input 
+              type="text" 
+              id="city-pat" 
+              name="city" 
+              autocomplete="address-level2" 
+              pattern="^[A-Za-z0-9\s.-]+$"
+              title="Only ASCII alphanumeric allowed"
+              placeholder="e.g. Munchen" 
+              aria-label="City (ASCII only)" 
+              data-base-label="City (ASCII only)"
+              data-error-target="city-pat-error">
+            <div id="city-pat-error" class="error-msg" role="alert" aria-label="City constraint violation"></div>
+            <div class="aria-status-badge" id="city-pat-status">pattern="^[A-Za-z0-9\s.-]+$"</div>
+          </div>
+
+          <div class="form-group">
+            <label for="zip-pat">Postal Code</label>
+            <input 
+              type="text" 
+              id="zip-pat" 
+              name="postal-code" 
+              autocomplete="postal-code" 
+              pattern="^[A-Za-z0-9\s-]+$"
+              placeholder="00-001" 
+              aria-label="Postal Code" 
+              data-base-label="Postal Code"
+              data-error-target="zip-pat-error">
+            <div id="zip-pat-error" class="error-msg" role="alert"></div>
+            <div class="aria-status-badge" id="zip-pat-status">pattern="^[A-Za-z0-9\s-]+$"</div>
+          </div>
+
+        </div>
+
+        <div class="button-group">
+          <input type="submit" value="Submit Form">
+          <input type="reset" value="Reset Fields">
+          <button type="button" class="btn-simulate" onclick="simulateAutofill('form-pattern', 'Jérôme', 'Dupont', null, 'München')">
+            Test Simulation: "Jérôme / München"
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Form 3: Pre-set aria-invalid="true" with ARIA Error Label -->
+    <div class="card">
+      <h2>
+        Form 3: Pre-set Invalid State (Simulating Server-Side Re-render)
+        <span class="badge badge-preset">Pre-set aria-invalid</span>
+      </h2>
+      <p class="card-desc">
+        This form simulates a page re-rendered after a failed submission. The first name field arrives with <code>aria-invalid="true"</code>
+        and <code>aria-label="First Name - Verification failed: Non-ASCII characters rejected by server"</code> already set.
+        Autofill preview and fill should detect this and suggest the ASCII fallback immediately.
+      </p>
+
+      <form id="form-preset" autocomplete="on" action="https://dump-truck.appspot.com/post.html" method="POST">
+        <div class="form-grid">
+          
+          <div class="form-group">
+            <label for="fname-pre">First Name (Initially Invalid)</label>
+            <input 
+              type="text" 
+              id="fname-pre" 
+              name="fname" 
+              autocomplete="given-name" 
+              aria-invalid="true"
+              aria-label="First Name - Verification failed: Non-ASCII characters rejected by server" 
+              aria-errormessage="fname-pre-error"
+              aria-describedby="fname-pre-error"
+              data-base-label="First Name"
+              data-error-target="fname-pre-error"
+              value=""
+              placeholder="Initially marked aria-invalid=true">
+            <div id="fname-pre-error" class="error-msg visible" role="alert" aria-label="Server validation error">
+              Verification failed: Non-ASCII characters rejected by server. Please provide standard ASCII Latin characters.
+            </div>
+            <div class="aria-status-badge" id="fname-pre-status">aria-invalid="true" | aria-label="First Name - Verification failed..."</div>
+          </div>
+
+          <div class="form-group">
+            <label for="city-pre">City (Initially Invalid)</label>
+            <input 
+              type="text" 
+              id="city-pre" 
+              name="city" 
+              autocomplete="address-level2" 
+              aria-invalid="true"
+              aria-label="City - Verification failed: Diacritics not allowed" 
+              aria-errormessage="city-pre-error"
+              aria-describedby="city-pre-error"
+              data-base-label="City"
+              data-error-target="city-pre-error"
+              value=""
+              placeholder="Initially marked aria-invalid=true">
+            <div id="city-pre-error" class="error-msg visible" role="alert" aria-label="City server validation error">
+              Verification failed: Special characters not accepted.
+            </div>
+            <div class="aria-status-badge" id="city-pre-status">aria-invalid="true" | aria-label="City - Verification failed..."</div>
+          </div>
+
+        </div>
+
+        <div class="button-group">
+          <input type="submit" value="Submit Form">
+          <input type="reset" value="Reset Fields">
+          <button type="button" class="btn-secondary" onclick="togglePreSetError()">
+            Toggle Error State
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Live Event & Refill Inspector -->
+    <div class="card">
+      <div class="log-header">
+        <h2 style="font-size:1.1rem; color:#fff; margin:0;">Live Event & Refill Inspector</h2>
+        <div>
+          <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:0.75rem;" onclick="clearLogs()">Clear Log</button>
+        </div>
+      </div>
+      <div id="log-output" class="log-container">
+        <div class="log-entry" style="color:#888;">Inspector ready. Interact with the form or trigger Autofill to observe events and ASCII refills...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Regular expression detecting characters outside standard ASCII range (diacritics, accented letters, etc.)
+    const NON_ASCII_REGEX = /[^\x00-\x7F]/;
+
+    // Helper: Strip diacritics using standard Unicode normalization (NFD decomposition)
+    function removeDiacritics(str) {
+      if (!str) return '';
+      // Decompose characters (e.g. 'ł' -> 'l', 'é' -> 'e', 'ü' -> 'u')
+      // Note: 'ł' / 'Ł' doesn't decompose via NFD alone in standard JS, so we add a mapping
+      return str
+        .replace(/[\u0141\u0142]/g, m => (m === '\u0141' ? 'L' : 'l'))
+        .replace(/[\u00DF]/g, 'ss')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .normalize('NFC');
+    }
+
+    // Logger
+    function logEvent(targetId, eventType, message, type = 'info') {
+      const logContainer = document.getElementById('log-output');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      
+      if (type === 'refill-success') {
+        entry.classList.add('log-refill-success');
+      } else if (type === 'highlight') {
+        entry.classList.add('log-highlight');
+      }
+
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+      entry.innerHTML = `
+        <span class="log-time">[${timeStr}]</span>
+        <span class="log-target">&lt;${targetId}&gt;</span>
+        <span class="log-event">[${eventType}]</span>: 
+        <span>${message}</span>
+      `;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function clearLogs() {
+      const logContainer = document.getElementById('log-output');
+      logContainer.innerHTML = '<div class="log-entry" style="color:#888;">Log cleared.</div>';
+    }
+
+    // Validation handler for inputs
+    function validateField(input, isEventTriggered = true) {
+      const value = input.value;
+      const baseLabel = input.getAttribute('data-base-label') || 'Field';
+      const errorTargetId = input.getAttribute('data-error-target');
+      const errorElement = errorTargetId ? document.getElementById(errorTargetId) : null;
+      const statusBadge = document.getElementById(input.id + '-status');
+
+      // Check 1: HTML5 Constraint Validation (pattern, etc.)
+      const failsHtml5Pattern = input.validity && !input.validity.valid;
+      
+      // Check 2: Diacritics / Non-ASCII verification check
+      const hasNonAscii = NON_ASCII_REGEX.test(value);
+
+      const isInvalid = (value.length > 0) && (hasNonAscii || failsHtml5Pattern);
+
+      const previousValue = input.getAttribute('data-last-val') || '';
+      const hadDiacritics = NON_ASCII_REGEX.test(previousValue);
+      const nowAscii = !NON_ASCII_REGEX.test(value) && value.length > 0;
+
+      // Track if Chrome refilled the ASCII fallback!
+      if (hadDiacritics && nowAscii && isEventTriggered) {
+        logEvent(
+          input.id, 
+          'REFILL DETECTED', 
+          `Value updated from "${previousValue}" (diacritics) to "${value}" (ASCII fallback). Validation now PASSES!`,
+          'refill-success'
+        );
+      }
+
+      input.setAttribute('data-last-val', value);
+
+      if (isInvalid) {
+        // Verification failed! Update ARIA attributes
+        input.setAttribute('aria-invalid', 'true');
+        input.classList.remove('validated');
+
+        // Dynamically update aria-label when verification fails
+        const errorDescription = hasNonAscii 
+          ? 'Verification failed: Diacritic or non-ASCII characters detected. Please use Latin characters.' 
+          : 'Verification failed: Does not match allowed character pattern.';
+        
+        const newAriaLabel = `${baseLabel} - ${errorDescription}`;
+        input.setAttribute('aria-label', newAriaLabel);
+
+        if (errorElement) {
+          errorElement.textContent = errorDescription;
+          errorElement.classList.add('visible');
+          errorElement.setAttribute('aria-label', `Error in ${baseLabel}: ${errorDescription}`);
+          input.setAttribute('aria-errormessage', errorElement.id);
+          input.setAttribute('aria-describedby', errorElement.id);
+        }
+
+        if (statusBadge) {
+          statusBadge.textContent = `aria-invalid="true" | aria-label="${newAriaLabel}"`;
+          statusBadge.style.color = '#d93025';
+        }
+
+        logEvent(
+          input.id, 
+          'VALIDATION FAIL', 
+          `Value="${value}" rejected. Set aria-invalid="true" and updated aria-label to "${newAriaLabel}"`,
+          'highlight'
+        );
+        return false;
+      } else {
+        // Valid (or empty)
+        input.setAttribute('aria-invalid', 'false');
+        input.removeAttribute('aria-errormessage');
+        input.removeAttribute('aria-describedby');
+
+        if (value.length > 0) {
+          input.classList.add('validated');
+        } else {
+          input.classList.remove('validated');
+        }
+
+        // Restore default aria-label
+        input.setAttribute('aria-label', baseLabel);
+
+        if (errorElement) {
+          errorElement.textContent = '';
+          errorElement.classList.remove('visible');
+        }
+
+        if (statusBadge) {
+          statusBadge.textContent = `aria-invalid="false" | aria-label="${baseLabel}"`;
+          statusBadge.style.color = value.length > 0 ? '#188038' : 'var(--text-secondary)';
+        }
+
+        if (isEventTriggered && value.length > 0) {
+          logEvent(
+            input.id, 
+            'VALIDATION PASS', 
+            `Value="${value}" is valid ASCII. aria-invalid="false", aria-label="${baseLabel}"`,
+            'info'
+          );
+        }
+        return true;
+      }
+    }
+
+    // Attach listeners across all forms
+    document.querySelectorAll('input[type="text"]').forEach(input => {
+      // Initialize initial state
+      input.setAttribute('data-last-val', input.value);
+
+      // Listen to input (fires synchronously during SetAutofillValue)
+      input.addEventListener('input', (e) => {
+        logEvent(input.id, 'input', `Event fired. Current value="${input.value}"`);
+        validateField(input, true);
+      });
+
+      // Listen to change event
+      input.addEventListener('change', (e) => {
+        logEvent(input.id, 'change', `Event fired. Current value="${input.value}"`);
+        validateField(input, true);
+      });
+
+      // HTML5 invalid event
+      input.addEventListener('invalid', (e) => {
+        logEvent(input.id, 'invalid', `HTML5 constraint violation. Value="${input.value}"`);
+        validateField(input, true);
+      });
+    });
+
+    // Helper to simulate Autofill in browser without saved profile
+    function simulateAutofill(formId, fname, lname, street, city) {
+      logEvent(formId, 'SIMULATION', `Simulating Autofill with initial diacritic values...`, 'highlight');
+      const form = document.getElementById(formId);
+
+      const fields = [
+        { name: 'fname', val: fname },
+        { name: 'lname', val: lname },
+        { name: 'street-address', val: street },
+        { name: 'city', val: city }
+      ];
+
+      fields.forEach(({ name, val }) => {
+        if (!val) return;
+        const input = form.querySelector(`input[name="${name}"]`);
+        if (!input) return;
+
+        // Step 1: Autofill sets diacritic value
+        input.value = val;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Step 2: Check if validation failed (aria-invalid is true)
+        const isInvalid = input.getAttribute('aria-invalid') === 'true';
+        if (isInvalid) {
+          const asciiFallback = removeDiacritics(val);
+          logEvent(
+            input.id, 
+            'SIMULATED CL REFILL', 
+            `CL detects aria-invalid="true". Refilling ASCII fallback: "${asciiFallback}"`,
+            'refill-success'
+          );
+          
+          // Small simulated delay or synchronous refill mimicking form_autofill_util.cc
+          setTimeout(() => {
+            input.value = asciiFallback;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }, 300);
+        }
+      });
+    }
+
+    // Toggle Form 3 error state
+    function togglePreSetError() {
+      const fname = document.getElementById('fname-pre');
+      const city = document.getElementById('city-pre');
+      const currentlyInvalid = fname.getAttribute('aria-invalid') === 'true';
+
+      [fname, city].forEach(input => {
+        if (currentlyInvalid) {
+          input.setAttribute('aria-invalid', 'false');
+          input.setAttribute('aria-label', input.getAttribute('data-base-label'));
+          const err = document.getElementById(input.getAttribute('data-error-target'));
+          if (err) err.classList.remove('visible');
+          document.getElementById(input.id + '-status').textContent = 'aria-invalid="false" (cleared)';
+        } else {
+          input.setAttribute('aria-invalid', 'true');
+          const errLabel = `${input.getAttribute('data-base-label')} - Verification failed: Non-ASCII characters rejected by server`;
+          input.setAttribute('aria-label', errLabel);
+          const err = document.getElementById(input.getAttribute('data-error-target'));
+          if (err) err.classList.add('visible');
+          document.getElementById(input.id + '-status').textContent = `aria-invalid="true" | aria-label="${errLabel}"`;
+        }
+      });
+      logEvent('form-preset', 'TOGGLE', `Toggled pre-set invalid state to: ${!currentlyInvalid}`);
+    }
+  </script>
+</body>
+</html>
